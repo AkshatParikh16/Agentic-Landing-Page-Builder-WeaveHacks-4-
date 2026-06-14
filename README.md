@@ -204,6 +204,46 @@ npm run dev
 
 The cookie session lasts 1 hour. Start again from `/`.
 
+## Deploy on Render
+
+### Service settings (Render dashboard)
+
+| Setting | Value |
+|---------|--------|
+| **Root Directory** | `web` |
+| **Runtime** | Node |
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `npm start` |
+| **Instance type** | Free or Starter (builds take 2–4 min per page; Free tier may sleep) |
+
+Connect your GitHub repo, set **Root Directory** to `web`, then add environment variables below.
+
+### Environment variables — **5 total** (minimum **1** required)
+
+| # | Key | Required | Example / default |
+|---|-----|----------|-------------------|
+| 1 | `OPENAI_API_KEY` | **Yes** | `sk-proj-...` |
+| 2 | `WANDB_API_KEY` | No | Your W&B key (for tracing) |
+| 3 | `WEAVE_PROJECT` | No | `landing-page-builder` |
+| 4 | `EVAL_PASS_SCORE` | No | `8` |
+| 5 | `MAX_IMPROVE_ITERATIONS` | No | `2` |
+
+**Optional (recommended on Render):**
+
+| Key | Value |
+|-----|--------|
+| `NODE_VERSION` | `20` |
+
+Render sets `PORT` automatically — do **not** add a PORT variable. The app uses `next start`, which reads Render's `PORT`.
+
+### After deploy
+
+1. Open your Render URL (e.g. `https://your-app.onrender.com`).
+2. Home page should show **OpenAI verified at [time]** in green.
+3. Run through prompt → questions → build → result.
+
+**Note:** Generated HTML is stored on the server's local disk (`.results/`). Files are lost when the service redeploys or restarts — users should download their HTML from `/result`.
+
 ## What to commit (GitHub)
 
 **Include:** source code, `web/.env.example`, `README.md`, config files.
