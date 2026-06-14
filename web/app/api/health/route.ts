@@ -1,43 +1,19 @@
 import { NextResponse } from 'next/server';
-import { getEnvStatus, requireOpenAIKey } from '@/lib/env';
-import { formatOpenAIError, getOpenAIClient } from '@/lib/openai-client';
+import { verifyOpenAI } from '@/lib/health';
+import { getEnvStatus } from '@/lib/env';
 
 export async function GET() {
+  const health = await verifyOpenAI();
   const env = getEnvStatus();
 
-  if (!env.openai.configured || !env.openai.validFormat) {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: 'OPENAI_API_KEY is missing or invalid. Add it to web/.env.local and restart npm run dev.',
-        openaiVerified: false,
-        ...env,
-      },
-      { status: 503 }
-    );
-  }
-
-  try {
-    requireOpenAIKey();
-    const openai = getOpenAIClient();
-    await openai.models.list();
-
-    return NextResponse.json({
-      ok: true,
-      message: 'OpenAI connection verified.',
-      openaiVerified: true,
+  return NextResponse.json(
+    {
+      ok: health.ok,
+      message: health.message,
+      openaiVerified: health.openaiVerified,
+      verifiedAt: health.verifiedAt,
       ...env,
-    });
-  } catch (err) {
-    const message = formatOpenAIError(err);
-    return NextResponse.json(
-      {
-        ok: false,
-        message,
-        openaiVerified: false,
-        ...env,
-      },
-      { status: 502 }
-    );
-  }
+    },
+    { status: health.ok ? 200 : health.openaiVerified === false && !env.openai.configured ? 503 : 502 }
+  );
 }

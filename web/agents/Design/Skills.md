@@ -30,9 +30,8 @@ Specify how each reusable component looks:
 - Hero: centered vs split layout, background treatment
 
 ## Skill: Animation Specification
-Define subtle animations for polish:
-- Fade-in on scroll (Intersection Observer based)
-- Hero entrance animation
+Define subtle CSS-only animations for polish:
 - Button hover transitions
 - Card hover effects (lift, glow)
-Always specify: property, duration, easing, trigger
+- Optional hero fade-in via CSS `@keyframes` on load
+Always specify: property, duration, easing. Do not require JavaScript.

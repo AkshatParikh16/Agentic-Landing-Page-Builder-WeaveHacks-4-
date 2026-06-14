@@ -201,7 +201,7 @@ export const runDev = traced('Dev', async function Dev(
     messages: [
       {
         role: 'system',
-        content: `${devContext}\n\n---\n\nReturn ONLY raw HTML starting with <!DOCTYPE html>. No markdown, no code fences, no explanation.`,
+        content: `${devContext}\n\n---\n\nReturn ONLY raw HTML starting with <!DOCTYPE html>. No markdown, no code fences, no explanation. STATIC PAGE ONLY: HTML + CSS in <style> — no <script> tags, no JavaScript.`,
       },
       {
         role: 'user',
@@ -291,6 +291,7 @@ export const runEvaluator = traced('Evaluator', async function Evaluator(
   "passed": <true if score >= ${SCORE_PASS}>
 }
 Score criteria: visual quality (3pts) + copy quality (3pts) + section completeness (2pts) + mobile responsiveness (2pts).
+Do not penalize the page for lacking JavaScript — static HTML/CSS is the goal.
 Success criteria: ${ceoPlan.successCriteria}
 Pass threshold: ${SCORE_PASS}/10. Iteration: ${iteration}.`,
       },

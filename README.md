@@ -27,7 +27,7 @@ flowchart TB
 | **CEO** | Reads agent roster, sets strategy, activates sub-agents, assigns retries after Judge feedback |
 | **PM** | Writes PRD, delegates tasks to Design / Dev / DevOps |
 | **Design** | Produces visual spec (colors, typography, layout) |
-| **Dev** | Builds single-file HTML with inline CSS/JS |
+| **Dev** | Builds single-file static HTML with inline CSS only (no JavaScript) |
 | **DevOps** | Deployment config (only when user asks to deploy/host) |
 | **Evaluator** | Scores 1–10, lists improvements, triggers CEO retry loop |
 
@@ -52,7 +52,7 @@ cp .env.example .env.local
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | OpenAI API key (verified live via `/api/health`) |
+| `OPENAI_API_KEY` | Yes | OpenAI API key (verified live on every page load) |
 | `WANDB_API_KEY` | No | W&B API key for Weave tracing |
 | `WEAVE_PROJECT` | No | W&B project name (default: `landing-page-builder`) |
 | `EVAL_PASS_SCORE` | No | Min score to pass (default: `8`) |
@@ -66,12 +66,15 @@ npm run dev
 
 Open [http://localhost:3001](http://localhost:3001).
 
+**Important:** Run only one dev server on port 3001. If you see `EADDRINUSE`, stop the existing process before starting again. After code changes, hard-refresh the browser (`Ctrl+Shift+R`) if the UI looks stuck.
+
 ## User flow
 
-1. **Describe** your product in a free-form prompt.
-2. **Answer** 5–6 targeted onboarding questions (tone, audience, CTA, etc.).
-3. **Watch** each agent work in its own lane (CEO → PM → Design → Dev → Evaluator).
-4. **Preview** the generated page; download as `landing-page.html`.
+1. **Describe** your product — the home page verifies OpenAI on the server and shows a timestamped status.
+2. **Continue** via a native HTML form (works even if client JavaScript fails to load).
+3. **Answer** 5–6 onboarding questions on `/questions`.
+4. **Watch** agents work on `/build` (SSE stream with per-agent lanes).
+5. **Preview** and download `landing-page.html`.
 
 If the Judge scores below the threshold, the CEO assigns Design and/or Dev to revise — up to `MAX_IMPROVE_ITERATIONS` times.
 
@@ -88,22 +91,23 @@ View traces at [wandb.ai](https://wandb.ai) under your `WEAVE_PROJECT`.
 
 ```
 web/
-├── agents/           # Agent definitions (Agent.md + Skills.md)
-│   ├── CEO/
-│   ├── PM/
-│   ├── Design/
-│   ├── Dev/
-│   ├── DevOps/
-│   └── Evaluator/
+├── agents/              # Agent definitions (Agent.md + Skills.md)
 ├── app/
-│   ├── api/onboard/  # Deep onboarding questions
-│   ├── api/generate/ # SSE streaming pipeline
-│   └── page.tsx      # UI with per-agent lanes
+│   ├── page.tsx         # Server: live OpenAI health + prompt form
+│   ├── questions/       # Server: onboarding Q&A form
+│   ├── build/           # Client island: SSE agent progress
+│   ├── actions.ts       # Server Actions (submit prompt / answers)
+│   └── api/
+│       ├── health/      # JSON health check
+│       └── generate/    # SSE streaming pipeline
+├── components/          # health-banner, forms, build-progress
 └── lib/
-    ├── agents.ts     # LLM calls per agent
+    ├── health.ts        # verifyOpenAI() — shared server + API
+    ├── session.ts       # Cookie session between steps
+    ├── onboarding.ts    # Generate onboarding questions
+    ├── agents.ts        # LLM calls per agent
     ├── orchestrator.ts  # CEO loop + pipeline
-    ├── tracer.ts     # W&B Weave integration
-    └── types.ts
+    └── tracer.ts        # W&B Weave integration
 ```
 
 ## Customizing agents
@@ -113,6 +117,14 @@ Edit `web/agents/<Agent>/Agent.md` and `Skills.md` to change behavior without to
 ## Production build
 
 ```bash
+cd web
 npm run build
 npm start
+```
+
+If the UI breaks after many dev restarts, delete the cache and rebuild:
+
+```bash
+rm -rf .next
+npm run build
 ```
