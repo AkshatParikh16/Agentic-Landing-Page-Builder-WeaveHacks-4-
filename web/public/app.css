@@ -1,0 +1,208 @@
+/* App shell — works without Tailwind when Next.js CSS chunks 404 */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: #030712;
+  color: #f9fafb;
+  line-height: 1.5;
+}
+
+main {
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.app-container {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.app-container-wide {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.app-center {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.app-eyebrow {
+  color: #818cf8;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin: 0;
+}
+
+.app-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0.25rem 0;
+}
+
+.app-subtitle {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  text-align: center;
+  margin: 0;
+}
+
+.app-status-ok {
+  color: #34d399;
+  font-size: 0.75rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.app-status-error {
+  border: 1px solid #991b1b;
+  background: rgba(127, 29, 29, 0.5);
+  color: #fca5a5;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+}
+
+textarea, input[type="text"], select {
+  width: 100%;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  color: #fff;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+textarea {
+  min-height: 10rem;
+  resize: vertical;
+}
+
+textarea:focus, input:focus, select:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.app-btn {
+  display: inline-block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  background: #6366f1;
+  color: #fff;
+  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+}
+
+.app-btn:hover { background: #818cf8; }
+.app-btn:disabled { background: #3730a3; color: #c7d2fe; cursor: wait; }
+
+.app-btn-secondary {
+  background: #1f2937;
+  box-shadow: none;
+}
+
+.app-btn-secondary:hover { background: #374151; }
+
+.app-form { display: flex; flex-direction: column; gap: 1rem; }
+
+.app-label {
+  display: block;
+  font-size: 0.875rem;
+  color: #d1d5db;
+  margin-bottom: 0.5rem;
+}
+
+.app-link {
+  color: #6b7280;
+  font-size: 0.875rem;
+  text-align: center;
+  display: block;
+  text-decoration: none;
+}
+
+.app-link:hover { color: #d1d5db; }
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .agent-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.agent-card {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid #1f2937;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.agent-card[data-status="running"] { border-color: #6366f1; }
+.agent-card[data-status="done"] { border-color: rgba(5, 150, 105, 0.8); }
+
+.agent-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #111827;
+  border-bottom: 1px solid #1f2937;
+}
+
+.agent-card-body {
+  padding: 1rem;
+  min-height: 4.5rem;
+}
+
+.agent-card-title { font-size: 0.875rem; font-weight: 600; margin: 0; }
+.agent-card-desc { font-size: 0.75rem; color: #6b7280; margin: 0; }
+.agent-card-msg { font-size: 0.75rem; color: #9ca3af; margin: 0; font-style: italic; }
+.agent-card-badge { font-size: 1rem; }
+
+.result-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.result-frame {
+  width: 100%;
+  height: 75vh;
+  border: 1px solid #1f2937;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.result-header h2 { margin: 0; font-size: 1.25rem; }
+
+.hidden { display: none !important; }

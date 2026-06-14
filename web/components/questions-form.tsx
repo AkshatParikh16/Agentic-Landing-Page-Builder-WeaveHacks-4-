@@ -4,19 +4,14 @@ import type { Question } from '@/lib/session';
 
 export function QuestionsForm({ questions }: { questions: Question[] }) {
   return (
-    <form action={submitAnswers} className="space-y-5">
+    <form action={submitAnswers} className="app-form">
       {questions.map((q) => (
-        <div key={q.id} className="space-y-2">
-          <label htmlFor={q.id} className="text-sm text-gray-300">
+        <div key={q.id}>
+          <label htmlFor={q.id} className="app-label">
             {q.question}
           </label>
           {q.type === 'select' && q.options?.length ? (
-            <select
-              id={q.id}
-              name={q.id}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm"
-              defaultValue=""
-            >
+            <select id={q.id} name={q.id} defaultValue="">
               <option value="" disabled>
                 Select…
               </option>
@@ -27,12 +22,7 @@ export function QuestionsForm({ questions }: { questions: Question[] }) {
               ))}
             </select>
           ) : (
-            <input
-              id={q.id}
-              type="text"
-              name={q.id}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm"
-            />
+            <input id={q.id} type="text" name={q.id} />
           )}
         </div>
       ))}

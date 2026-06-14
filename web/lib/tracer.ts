@@ -11,14 +11,18 @@ const PROJECT = process.env.WEAVE_PROJECT ?? 'landing-page-builder';
  */
 export async function ensureTracing(): Promise<boolean> {
   if (tracingReady) return true;
+  if (!process.env.WANDB_API_KEY?.trim()) return false;
+
   if (!initPromise) {
-    initPromise = weave
+    const init = weave
       .init(PROJECT)
       .then(() => {
         tracingReady = true;
         return true;
       })
       .catch(() => false);
+    const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 5000));
+    initPromise = Promise.race([init, timeout]);
   }
   const ok = await initPromise;
   tracingReady = Boolean(ok);

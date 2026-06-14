@@ -19,14 +19,16 @@ export async function submitPrompt(formData: FormData) {
     redirect(`/?error=${encodeURIComponent(health.message)}`);
   }
 
+  let questions;
   try {
-    const questions = await generateOnboardingQuestions(prompt);
-    await setSession({ prompt, questions, answers: {} });
-    redirect('/questions');
+    questions = await generateOnboardingQuestions(prompt);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to generate questions';
     redirect(`/?error=${encodeURIComponent(msg)}`);
   }
+
+  await setSession({ prompt, questions, answers: {} });
+  redirect('/questions');
 }
 
 export async function submitAnswers(formData: FormData) {

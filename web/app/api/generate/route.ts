@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { runPipeline } from '@/lib/orchestrator';
+import { saveResult } from '@/lib/result-store';
 import type { PipelineEvent } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
@@ -32,10 +33,13 @@ export async function POST(req: NextRequest) {
           runPipeline(prompt, answers ?? {}, send)
         );
 
+        const resultId = saveResult(html, { finalScore });
+
         send({
           agent: 'DONE',
           status: 'done',
-          html,
+          resultId,
+          htmlLength: html.length,
           output: { finalScore, iterations },
         });
       } catch (err) {

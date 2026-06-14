@@ -1,5 +1,5 @@
 import { verifyOpenAI } from '@/lib/health';
-import { HealthBanner } from '@/components/health-banner';
+import { formatVerifiedAt } from '@/lib/health';
 import { PromptForm } from '@/components/prompt-form';
 
 export default async function HomePage({
@@ -10,21 +10,21 @@ export default async function HomePage({
   const health = await verifyOpenAI();
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-6">
-      <div className="max-w-2xl mx-auto min-h-[80vh] flex flex-col justify-center space-y-6">
-        <div className="text-center space-y-2">
-          <p className="text-indigo-400 text-sm uppercase tracking-wide">Agentic Landing Page Builder</p>
-          <h1 className="text-4xl font-bold">Describe your product</h1>
-          <p className="text-gray-400 text-sm">CEO → PM → Design → Dev → Judge agents build your page.</p>
+    <main>
+      <div className="app-container app-center">
+        <div>
+          <p className="app-eyebrow">Agentic Landing Page Builder</p>
+          <h1 className="app-title">Describe your product</h1>
+          <p className="app-subtitle">CEO → PM → Design → Dev → Judge agents build your page.</p>
         </div>
 
-        <HealthBanner health={health} />
-
-        {searchParams.error && (
-          <div className="rounded-lg border border-red-800 bg-red-950/50 px-4 py-3 text-sm text-red-300">
-            {searchParams.error}
-          </div>
+        {health.ok && health.openaiVerified ? (
+          <p className="app-status-ok">OpenAI verified at {formatVerifiedAt(health.verifiedAt)}</p>
+        ) : (
+          <div className="app-status-error">{health.message}</div>
         )}
+
+        {searchParams.error && <div className="app-status-error">{searchParams.error}</div>}
 
         <PromptForm />
       </div>

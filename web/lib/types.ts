@@ -15,6 +15,8 @@ export type PipelineEvent = {
   ms?: number;
   output?: Record<string, unknown>;
   html?: string;
+  resultId?: string;
+  htmlLength?: number;
   iteration?: number;
 };
 
