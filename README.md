@@ -1,23 +1,41 @@
 # Agentic Landing Page Builder
 
-A multi-agent system that turns a product prompt into a polished static landing page. A **CEO Agent** orchestrates specialist sub-agents; a **Judge (Evaluator) Agent** scores output and triggers improvement loops until quality meets the bar. Every agent call is traced in **Weights & Biases (Weave)**.
+A multi-agent system that turns a product prompt into a polished **static HTML landing page**. A **CEO Agent** orchestrates specialist sub-agents; a **Judge (Evaluator) Agent** scores output and triggers improvement loops until quality meets the bar. Agent calls can be traced in **Weights & Biases (Weave)**.
+
+**Live app:** runs at [http://localhost:3001](http://localhost:3001) in development.
 
 ## Architecture
 
 ```mermaid
 flowchart TB
-  User[User prompt + answers] --> Onboard[Onboarding questions]
-  Onboard --> CEO[CEO Agent]
-  CEO --> PM[PM Agent]
-  PM --> Design[Design Agent]
-  PM --> Dev[Dev Agent]
-  PM --> DevOps[DevOps Agent optional]
-  Dev --> Eval[Evaluator Judge]
+  subgraph ui [Server-first UI]
+    Home["/ — prompt + OpenAI health"]
+    Questions["/questions — onboarding form"]
+    Build["/build — agent progress"]
+    Result["/result — preview + download"]
+  end
+
+  User[User prompt + answers] --> Home
+  Home -->|Server Action| Questions
+  Questions -->|Server Action| Build
+  Build -->|SSE /api/generate| Pipeline
+  Pipeline --> Result
+
+  subgraph pipeline [Agent pipeline]
+    CEO[CEO Agent]
+    PM[PM Agent]
+    Design[Design Agent]
+    Dev[Dev Agent]
+    DevOps[DevOps optional]
+    Eval[Evaluator Judge]
+  end
+
+  CEO --> PM --> Design --> Dev --> Eval
   Eval -->|score below threshold| CEO
-  CEO -->|assign retry| Design
-  CEO -->|assign retry| Dev
-  Eval -->|pass| HTML[Static HTML page]
-  Dev --> HTML
+  CEO -->|retry| Design
+  CEO -->|retry| Dev
+  Dev --> HTML[Static HTML file]
+  HTML --> Result
 ```
 
 ### Agents
@@ -47,16 +65,22 @@ npm install
 Copy the example env file and add your keys:
 
 ```bash
+# macOS / Linux
 cp .env.example .env.local
+
+# Windows PowerShell
+copy .env.example .env.local
 ```
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | OpenAI API key (verified live on every page load) |
+| `OPENAI_API_KEY` | Yes | OpenAI API key — verified live on every home page load |
 | `WANDB_API_KEY` | No | W&B API key for Weave tracing |
 | `WEAVE_PROJECT` | No | W&B project name (default: `landing-page-builder`) |
 | `EVAL_PASS_SCORE` | No | Min score to pass (default: `8`) |
 | `MAX_IMPROVE_ITERATIONS` | No | Max revision loops (default: `2`) |
+
+**Never commit `web/.env.local`** — it contains your secrets.
 
 ### 3. Run
 
@@ -66,17 +90,38 @@ npm run dev
 
 Open [http://localhost:3001](http://localhost:3001).
 
-**Important:** Run only one dev server on port 3001. If you see `EADDRINUSE`, stop the existing process before starting again. After code changes, hard-refresh the browser (`Ctrl+Shift+R`) if the UI looks stuck.
+`npm run dev` automatically clears the `.next` cache first (`predev` script) to avoid stale JS/CSS chunk errors.
 
 ## User flow
 
-1. **Describe** your product — the home page verifies OpenAI on the server and shows a timestamped status.
-2. **Continue** via a native HTML form (works even if client JavaScript fails to load).
-3. **Answer** 5–6 onboarding questions on `/questions`.
-4. **Watch** agents work on `/build` (SSE stream with per-agent lanes).
-5. **Preview** and download `landing-page.html`.
+1. **`/` — Describe** your product. OpenAI is verified on the server with a timestamped status message.
+2. **Continue** via a native HTML form + Server Action (works without client JavaScript).
+3. **`/questions`** — Answer 5–6 AI-generated onboarding questions.
+4. **`/build`** — Watch agents work in real time (~2–4 minutes for a full run).
+5. **`/result?id=...`** — Preview your landing page and **Download HTML**.
 
 If the Judge scores below the threshold, the CEO assigns Design and/or Dev to revise — up to `MAX_IMPROVE_ITERATIONS` times.
+
+### Expected build time
+
+| Step | Model | Typical time |
+|------|--------|--------------|
+| CEO, PM, Design, Evaluator | gpt-4o-mini | ~10–20 s each |
+| Dev (HTML generation) | gpt-4o | ~60–120 s |
+| Retry loop (if score &lt; 8) | — | +1–2 min |
+
+## Routes & API
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Home — live health check + prompt form |
+| `/questions` | Onboarding Q&A form |
+| `/build` | Agent progress (loads session via `/api/build-session`, streams via `/api/generate`) |
+| `/result?id=...` | Preview iframe + download button |
+| `GET /api/health` | JSON OpenAI health check |
+| `GET /api/build-session` | Returns prompt + answers from cookie session |
+| `POST /api/generate` | SSE agent pipeline stream |
+| `GET /api/download?id=...` | Download generated HTML file |
 
 ## W&B tracing
 
@@ -91,23 +136,31 @@ View traces at [wandb.ai](https://wandb.ai) under your `WEAVE_PROJECT`.
 
 ```
 web/
-├── agents/              # Agent definitions (Agent.md + Skills.md)
+├── agents/                  # Agent definitions (Agent.md + Skills.md)
+│   ├── CEO/ PM/ Design/ Dev/ DevOps/ Evaluator/
 ├── app/
-│   ├── page.tsx         # Server: live OpenAI health + prompt form
-│   ├── questions/       # Server: onboarding Q&A form
-│   ├── build/           # Client island: SSE agent progress
-│   ├── actions.ts       # Server Actions (submit prompt / answers)
+│   ├── page.tsx             # Home — server health check + prompt form
+│   ├── questions/page.tsx   # Onboarding form
+│   ├── build/page.tsx       # Agent progress UI
+│   ├── result/page.tsx      # Preview + download
+│   ├── actions.ts           # Server Actions (submit prompt / answers)
 │   └── api/
-│       ├── health/      # JSON health check
-│       └── generate/    # SSE streaming pipeline
-├── components/          # health-banner, forms, build-progress
-└── lib/
-    ├── health.ts        # verifyOpenAI() — shared server + API
-    ├── session.ts       # Cookie session between steps
-    ├── onboarding.ts    # Generate onboarding questions
-    ├── agents.ts        # LLM calls per agent
-    ├── orchestrator.ts  # CEO loop + pipeline
-    └── tracer.ts        # W&B Weave integration
+│       ├── health/          # JSON health check
+│       ├── build-session/   # Session data for build page
+│       ├── generate/        # SSE streaming pipeline
+│       └── download/        # HTML file download
+├── components/              # Forms + submit button
+├── lib/
+│   ├── health.ts            # verifyOpenAI() — server + API
+│   ├── session.ts           # Cookie session between steps
+│   ├── onboarding.ts        # Generate onboarding questions
+│   ├── result-store.ts      # Save/load generated HTML
+│   ├── agents.ts            # LLM calls per agent
+│   ├── orchestrator.ts      # CEO loop + full pipeline
+│   └── tracer.ts            # W&B Weave integration
+└── public/
+    ├── app.css              # Fallback dark-theme styles (always loads)
+    └── build-stream.js      # Build page SSE client (no React required)
 ```
 
 ## Customizing agents
@@ -122,9 +175,52 @@ npm run build
 npm start
 ```
 
-If the UI breaks after many dev restarts, delete the cache and rebuild:
+## Troubleshooting
+
+### Port already in use (`EADDRINUSE`)
+
+Only one dev server can run on port 3001.
+
+```powershell
+# Windows — find and kill the process
+netstat -ano | findstr :3001
+Stop-Process -Id <PID> -Force
+npm run dev
+```
+
+### UI looks unstyled or stuck
+
+1. Stop the dev server (Ctrl+C).
+2. Run `npm run dev` again (clears `.next` automatically).
+3. Hard-refresh the browser: `Ctrl+Shift+R`.
+
+### Agents stuck on "Waiting…"
+
+- Ensure only one `npm run dev` is running.
+- Check the browser console for errors on `/build`.
+- Confirm `web/.env.local` has a valid `OPENAI_API_KEY`.
+
+### "Session expired" on `/build` or `/questions`
+
+The cookie session lasts 1 hour. Start again from `/`.
+
+## What to commit (GitHub)
+
+**Include:** source code, `web/.env.example`, `README.md`, config files.
+
+**Exclude (already in `.gitignore`):**
+
+- `web/.env.local` — API keys
+- `web/node_modules/`, `web/.next/`
+- `web/.results/` — generated HTML artifacts
+- `.cursor/` — IDE files
 
 ```bash
-rm -rf .next
-npm run build
+git add .
+git commit -m "Your message"
+git push origin main
 ```
+
+## License
+
+MIT — see repository for details.
