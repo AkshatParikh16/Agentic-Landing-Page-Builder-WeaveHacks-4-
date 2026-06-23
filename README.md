@@ -253,7 +253,7 @@ Render sets `PORT` automatically — do **not** add a PORT variable. The app use
 - `web/.env.local` — API keys
 - `web/node_modules/`, `web/.next/`
 - `web/.results/` — generated HTML artifacts
-- `.cursor/` — IDE files
+- IDE/local config folders (see `.gitignore`)
 
 ```bash
 git add .
